@@ -112,8 +112,17 @@ getDependencies = mapM (getRequiredAttr "path") =<< selectElems "depends_on"
 
 getTypeInfo e = do
     name   <- getRequiredAttr "name" e
-    m32 <- getRequiredAttr "type" e
-    m64 <- getAttr m32 "type64" e
+    m32' <- getOptionalAttr "type" e
+    m64' <- getOptionalAttr "type64" e
+    (m32, m64) <- case (m32', m64') of
+      (Nothing, Nothing) -> 
+        throwError (ppElement e ++ " element missing required type attribute")
+      (Just m32, Just m64) ->
+        return (m32, m64)
+      (Just m32, Nothing) ->
+        return (m32, m32)
+      (Nothing, Just m64) ->
+        return (m64, m64)
     let typeEncoding = Sized{..}
     return TypeInfo{..}
 
